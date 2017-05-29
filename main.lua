@@ -1,5 +1,6 @@
 local simple = require 'shaders.simple'
 local balloon = require 'balloon'
+local input = require 'input'
 
 function lovr.load()
   debug = true
@@ -8,10 +9,13 @@ function lovr.load()
   balloon:init()
   windmillBlades = lovr.graphics.newModel('art/windmill-blades.obj', 'art/windmill-blades_texture0.png')
   lovr.graphics.setShader(simple())
+  input:init()
 end
 
 function lovr.update(dt)
   world:update(dt)
+  input:update(dt)
+  balloon:update(dt)
 end
 
 function lovr.draw()
@@ -20,4 +24,13 @@ function lovr.draw()
   level:draw(x, y, z, .03)
   windmillBlades:draw(.5, 0, -1.3, .2, angle, 0, 0, 1)
   balloon:draw()
+  input:draw()
+end
+
+function lovr.controlleradded()
+  input:refresh()
+end
+
+function lovr.controllerremoved()
+  input:refresh()
 end
