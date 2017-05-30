@@ -2,6 +2,11 @@ local simple = require 'shaders.simple'
 local balloon = require 'balloon'
 local input = require 'input'
 
+viewport = {
+  translation = 0,
+  rotation = 0
+}
+
 function lovr.load()
   debug = true
   level = lovr.graphics.newModel('art/level.obj')
@@ -20,13 +25,19 @@ function lovr.update(dt)
 end
 
 function lovr.draw()
+  input:draw()
+
+  lovr.graphics.push()
+  lovr.graphics.translate(0, -viewport.translation, 0)
+  lovr.graphics.rotate(viewport.rotation)
+
   local x, y, z = 0, -.75, -2
   local angle = lovr.timer.getTime() * 2
   level:draw(x, y, z, .03)
-  obstacle:draw(0, .5, -2, .03)
+  obstacle:draw(0, 1, 0, .08)
   windmillBlades:draw(.5, 0, -1.3, .2, angle, 0, 0, 1)
   balloon:draw()
-  input:draw()
+  lovr.graphics.pop()
 end
 
 function lovr.controlleradded()

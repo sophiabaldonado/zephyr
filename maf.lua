@@ -105,7 +105,7 @@ vec3 = {
     end,
 
     angle = function(v, u)
-      return math.acos(v:dot(u) / (v:length() + u:length()))
+      return math.acos(v:dot(u) / (v:length() * u:length()))
     end,
 
     dot = function(v, u)
