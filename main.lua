@@ -9,8 +9,8 @@ viewport = {
 
 function lovr.load()
   debug = true
-  level = lovr.graphics.newModel('art/level.obj')
-  obstacle = lovr.graphics.newModel('art/obstacle.obj')
+  level = lovr.graphics.newModel('art/level1.obj', 'art/level1.png')
+  star = lovr.graphics.newModel('art/star.dae', 'art/gold.png')
   world = lovr.physics.newWorld()
   balloon:init()
   windmillBlades = lovr.graphics.newModel('art/windmill-blades.obj', 'art/windmill-blades_texture0.png')
@@ -33,8 +33,9 @@ function lovr.draw()
 
   local x, y, z = 0, -.75, -2
   local angle = lovr.timer.getTime() * 2
-  level:draw(x, y, z, .03)
-  obstacle:draw(0, 1, 0, .08)
+  level:draw(0, 1, 0, .03)
+  level:draw(0, 2.2, 0, .03, math.pi)
+  star:draw(0, 4, 0, .1)
   windmillBlades:draw(.5, 0, -1.3, .2, angle, 0, 0, 1)
   balloon:draw()
   lovr.graphics.pop()
