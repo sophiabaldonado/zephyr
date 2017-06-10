@@ -25,7 +25,7 @@ function balloon:init()
   self.model = lovr.graphics.newModel('art/mobile_balloon.obj', 'art/mobile_DIFF.png')
 
   self.collider = world:newCollider()
-  self.collider:setPosition(0, .5, 0)
+  self.collider:setPosition(0, 1.5, .5)
   self.collider:setGravityIgnored(true)
   self.collider:setLinearDamping(.01)
 

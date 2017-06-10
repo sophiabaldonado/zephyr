@@ -33,7 +33,7 @@ function lovr.draw()
 
   local x, y, z = 0, -.75, -2
   local angle = lovr.timer.getTime() * 2
-  level:draw(0, 1, 0, .12)
+  level:draw(0, 1, 0, .05)
   star:draw(0, 4, 0, .1)
   windmillBlades:draw(.5, 0, -1.3, .2, angle, 0, 0, 1)
   balloon:draw()
