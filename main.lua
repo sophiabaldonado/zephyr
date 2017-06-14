@@ -1,4 +1,3 @@
-local simple = require 'shaders.simple'
 local balloon = require 'balloon'
 local input = require 'input'
 
@@ -8,36 +7,22 @@ viewport = {
 }
 
 function lovr.load()
-  debug = true
-  level = lovr.graphics.newModel('art/level2.obj')
-  star = lovr.graphics.newModel('art/star.dae', 'art/gold.png')
   world = lovr.physics.newWorld()
-  balloon:init()
-  windmillBlades = lovr.graphics.newModel('art/windmill-blades.obj', 'art/windmill-blades_texture0.png')
-  lovr.graphics.setShader(simple())
   input:init()
+  balloon:init()
+  lovr.graphics.setShader(require('shaders/simple'))
+  lovr.graphics.setBackgroundColor(130, 200, 220)
 end
 
 function lovr.update(dt)
-  world:update(dt)
   input:update(dt)
   balloon:update(dt)
+  world:update(dt)
 end
 
 function lovr.draw()
   input:draw()
-
-  lovr.graphics.push()
-  lovr.graphics.translate(0, -viewport.translation, 0)
-  lovr.graphics.rotate(viewport.rotation)
-
-  local x, y, z = 0, -.75, -2
-  local angle = lovr.timer.getTime() * 2
-  level:draw(0, 1, 0, .05)
-  star:draw(0, 4, 0, .1)
-  windmillBlades:draw(.5, 0, -1.3, .2, angle, 0, 0, 1)
   balloon:draw()
-  lovr.graphics.pop()
 end
 
 function lovr.controlleradded()
@@ -46,4 +31,44 @@ end
 
 function lovr.controllerremoved()
   input:refresh()
+end
+
+tick = {
+  rate = .03,
+  dt = 0,
+  accum = 0
+}
+function lovr.step()
+  tick.dt = lovr.timer.step()
+  tick.accum = tick.accum + tick.dt
+  while tick.accum >= tick.rate do
+    tick.accum = tick.accum - tick.rate
+    lovr.event.pump()
+    for name, a, b, c, d in lovr.event.poll() do
+      if name == 'quit' and (not lovr.quit or not lovr.quit()) then
+        return a
+      end
+      lovr.handlers[name](a, b, c, d)
+    end
+    lovr.update(tick.rate)
+  end
+  if lovr.audio then
+    lovr.audio.update()
+    if lovr.headset and lovr.headset.isPresent() then
+      lovr.audio.setOrientation(lovr.headset.getOrientation())
+      lovr.audio.setPosition(lovr.headset.getPosition())
+      lovr.audio.setVelocity(lovr.headset.getVelocity())
+    end
+  end
+  lovr.graphics.clear()
+  lovr.graphics.origin()
+  if lovr.draw then
+    if lovr.headset and lovr.headset.isPresent() then
+      lovr.headset.renderTo(lovr.draw)
+    else
+      lovr.draw()
+    end
+  end
+  lovr.graphics.present()
+  lovr.timer.sleep(.001)
 end

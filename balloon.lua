@@ -5,6 +5,7 @@ local vector = maf.vector
 local quaternion = maf.rotation
 
 local position = vector()
+local lastPosition = vector()
 local fanPosition = vector()
 local fanForce = vector()
 local fanDirection = vector()
@@ -13,8 +14,8 @@ local viewRotation = quaternion()
 
 local balloon = {}
 balloon.scale = .003
-balloon.fanStrength = .3
-balloon.fanRange = { .25, 1 }
+balloon.fanStrength = 80
+balloon.fanRange = { .25, 2 }
 balloon.fanCone = { 0, .5 }
 
 local function affine(x, min, max)
@@ -25,9 +26,10 @@ function balloon:init()
   self.model = lovr.graphics.newModel('art/mobile_balloon.obj', 'art/mobile_DIFF.png')
 
   self.collider = world:newCollider()
-  self.collider:setPosition(0, 1.5, .5)
+  self.collider:setMass(50)
+  self.collider:setPosition(0, 1.5, 0)
   self.collider:setGravityIgnored(true)
-  self.collider:setLinearDamping(.01)
+  self.collider:setLinearDamping(.05)
 
   self.basket = lovr.physics.newBoxShape(.05)
   self.collider:addShape(self.basket)
@@ -35,6 +37,7 @@ function balloon:init()
 end
 
 function balloon:update(dt)
+  lastPosition:set(self.collider:getPosition())
   position:set(self.collider:getPosition())
   viewRotation:angleAxis(-viewport.rotation, 0, 1, 0)
 
@@ -47,17 +50,17 @@ function balloon:update(dt)
       position:sub(fanPosition, fanForce)
       local distance = fanForce:length()
       fanForce:normalize()
-      fanDirection:set(0, 0, -1):rotate(fanRotation:angleAxis(fan.controller:getOrientation())):rotate(viewRotation)
+      fanDirection:set(0, 0, -1):rotate(fanRotation:angleAxis(fan.controller:getOrientation()):mul(input.rotationOffset)):rotate(viewRotation)
       local dot = fanDirection:dot(fanForce)
 
       -- Scale by how turned on the fan is
       fanForce:scale(fan.power)
 
       -- Scale by distance so the fan is more effective up close
-      fanForce:scale(1 - affine(distance, unpack(balloon.fanRange)))
+      fanForce:scale(1 - affine(distance, unpack(balloon.fanRange)) ^ .5)
 
       -- Scale by dot product so the fan is directional
-      fanForce:scale(1 - affine(1 - math.max(dot, 0), unpack(balloon.fanCone)))
+      fanForce:scale(1 - affine(1 - math.max(dot, 0), unpack(balloon.fanCone)) ^ .5)
 
       -- Global scaling factor
       fanForce:scale(balloon.fanStrength)
@@ -65,24 +68,23 @@ function balloon:update(dt)
       self.collider:applyForce(fanForce:unpack())
     end
   end
+
+  -- Float down
+  local vx, vy, vz = self.collider:getLinearVelocity()
+  if vy > -.3 then
+    self.collider:applyForce(0, -3, 0)
+  end
 end
 
 function balloon:draw()
   lovr.graphics.setColor(255, 255, 255)
 
-  -- Model
-  local x, y, z = self.collider:getPosition()
-  self.model:draw(x, y, z, self.scale, self.collider:getOrientation())
+  position:set(self.collider:getPosition())
+  position:lerp(lastPosition, 1 - tick.accum / tick.rate)
 
-  -- Basket
-  if debug then
-    lovr.graphics.push()
-    lovr.graphics.translate(self.collider:getPosition())
-    local x, y, z = self.basket:getPosition()
-    local size = self.basket:getDimensions()
-    lovr.graphics.cube('fill', x, y, z, size)
-    lovr.graphics.pop()
-  end
+  -- Model
+  local x, y, z = position:unpack()
+  self.model:draw(x, y, z, self.scale, self.collider:getOrientation())
 end
 
 return balloon
