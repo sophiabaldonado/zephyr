@@ -7,12 +7,23 @@ viewport = {
   viewMatrix = lovr.math.newTransform()
 }
 
+clouds = {}
+
 function lovr.load()
   world = lovr.physics.newWorld()
   input:init()
   balloon:init()
   lovr.graphics.setShader(require('shaders/simple'))
   lovr.graphics.setBackgroundColor(130, 200, 220)
+
+  for i = 1, 20 do
+    local direction = math.random() * 2 * math.pi
+    local distance = 4 + math.random() * 4
+    local y = 1 + math.random() * 10
+    local x = math.cos(direction) * distance
+    local z = math.sin(direction) * distance
+    table.insert(clouds, { x, y, z })
+  end
 end
 
 function lovr.update(dt)
@@ -22,12 +33,20 @@ function lovr.update(dt)
 end
 
 function lovr.draw()
+  local shader = lovr.graphics.getShader()
   viewport.viewMatrix:origin()
   viewport.viewMatrix:translate(lovr.headset.getPosition())
   viewport.viewMatrix:rotate(lovr.headset.getOrientation())
-  lovr.graphics.getShader():send('zephyrView', viewport.viewMatrix:inverse())
+  shader:send('zephyrView', viewport.viewMatrix:inverse())
+  shader:send('ambientColor', { .5, .5, .5 })
   input:draw()
   balloon:draw()
+
+  shader:send('ambientColor', { .9, .9, .9 })
+  for i = 1, #clouds do
+    local x, y, z = unpack(clouds[i])
+    lovr.graphics.cube('fill', x, y, z, .2)
+  end
 end
 
 function lovr.controlleradded()
