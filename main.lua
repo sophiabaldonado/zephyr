@@ -3,7 +3,8 @@ local input = require 'input'
 
 viewport = {
   translation = 0,
-  rotation = 0
+  rotation = 0,
+  viewMatrix = lovr.math.newTransform()
 }
 
 function lovr.load()
@@ -21,6 +22,10 @@ function lovr.update(dt)
 end
 
 function lovr.draw()
+  viewport.viewMatrix:origin()
+  viewport.viewMatrix:translate(lovr.headset.getPosition())
+  viewport.viewMatrix:rotate(lovr.headset.getOrientation())
+  lovr.graphics.getShader():send('zephyrView', viewport.viewMatrix:inverse())
   input:draw()
   balloon:draw()
 end

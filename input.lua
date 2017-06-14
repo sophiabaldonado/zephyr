@@ -83,10 +83,7 @@ function input:draw()
     lovr.graphics.rotate(rotation:getAngleAxis())
     lovr.graphics.translate(0, -.1, 0)
     input.fanBase:draw(0, 0, 0, .03)
-    lovr.graphics.push()
-    lovr.graphics.translate(0, .12, -.04)
-    input.fanBlades:draw(0, 0, 0, .03, util.lerp(fan.lastSpin, fan.spin, tick.accum / tick.rate), 0, 0, 1)
-    lovr.graphics.pop()
+    input.fanBlades:draw(0, .12, -.04, .03, util.lerp(fan.lastSpin, fan.spin, tick.accum / tick.rate), 0, 0, 1)
     lovr.graphics.pop()
   end
 end
