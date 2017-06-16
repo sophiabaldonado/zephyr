@@ -13,9 +13,9 @@ local fanRotation = quaternion()
 local viewRotation = quaternion()
 
 local balloon = {}
-balloon.scale = .003
-balloon.fanStrength = 80
-balloon.fanRange = { .25, 2 }
+balloon.scale = .001
+balloon.fanStrength = 20
+balloon.fanRange = { .05, 1 }
 balloon.fanCone = { 0, .5 }
 
 local function affine(x, min, max)
@@ -57,10 +57,10 @@ function balloon:update(dt)
       fanForce:scale(fan.power)
 
       -- Scale by distance so the fan is more effective up close
-      fanForce:scale(1 - affine(distance, unpack(balloon.fanRange)) ^ .5)
+      fanForce:scale(1 - affine(distance, unpack(balloon.fanRange)))
 
       -- Scale by dot product so the fan is directional
-      fanForce:scale(1 - affine(1 - math.max(dot, 0), unpack(balloon.fanCone)) ^ .5)
+      fanForce:scale(1 - affine(1 - math.max(dot, 0), unpack(balloon.fanCone)))
 
       -- Global scaling factor
       fanForce:scale(balloon.fanStrength)
@@ -71,7 +71,7 @@ function balloon:update(dt)
 
   -- Float down
   local vx, vy, vz = self.collider:getLinearVelocity()
-  if vy > -.3 then
+  if vy > -.5 then
     self.collider:applyForce(0, -3, 0)
   end
 end

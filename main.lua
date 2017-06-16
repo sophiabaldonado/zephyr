@@ -24,6 +24,13 @@ function lovr.load()
     local z = math.sin(direction) * distance
     table.insert(clouds, { x, y, z })
   end
+
+  model1 = lovr.graphics.newModel('art/level1.obj')
+  model2 = lovr.graphics.newModel('art/level2.obj')
+  model3 = lovr.graphics.newModel('art/level.obj')
+  obstacle = lovr.graphics.newModel('art/obstacle.obj')
+  bell = lovr.graphics.newModel('art/bell.obj', 'art/bell.png')
+  star = lovr.graphics.newModel('art/star.dae', 'art/gold.png')
 end
 
 function lovr.update(dt)
@@ -40,13 +47,27 @@ function lovr.draw()
   shader:send('zephyrView', viewport.viewMatrix:inverse())
   shader:send('ambientColor', { .5, .5, .5 })
   input:draw()
+
+  lovr.graphics.push()
+  lovr.graphics.translate(0, -viewport.translation, 0)
+  lovr.graphics.rotate(viewport.rotation)
+
   balloon:draw()
+  model1:draw(.3, 1, .3, .01)
+  model2:draw(-.3, 1, -.3, .0125)
+  model3:draw(.3, 1, -.3, .0125)
+  obstacle:draw(-.3, 1, .3, .05)
+  bell:draw(-.35, .95, .3, .01)
+  star:draw(.135, 1.25, -.23, .01)
+  star:draw(.2, .8, .1, .01)
 
   shader:send('ambientColor', { .9, .9, .9 })
   for i = 1, #clouds do
     local x, y, z = unpack(clouds[i])
     lovr.graphics.cube('fill', x, y, z, .2)
   end
+
+  lovr.graphics.pop()
 end
 
 function lovr.controlleradded()

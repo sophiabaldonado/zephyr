@@ -28,7 +28,7 @@ return lovr.graphics.newShader([[
 
   uniform vec3 ambientColor = vec3(.5, .5, .5);
   uniform vec3 diffuseColor = vec3(1, 1, 1);
-  uniform vec3 specularColor = vec3(.2, .2, .2);
+  uniform vec3 specularColor = vec3(.3, .3, .3);
 
   vec4 color(vec4 graphicsColor, sampler2D image, vec2 uv) {
     vec3 lightDirection = normalize(lightViewPosition - vertexPosition);
