@@ -15,6 +15,7 @@ function lovr.load()
   balloon:init()
   lovr.graphics.setShader(require('shaders/simple'))
   lovr.graphics.setBackgroundColor(130, 200, 220)
+  lovr.headset.setClipDistance(.01, 20)
 
   for i = 1, 20 do
     local direction = math.random() * 2 * math.pi
@@ -25,12 +26,14 @@ function lovr.load()
     table.insert(clouds, { x, y, z })
   end
 
-  model1 = lovr.graphics.newModel('art/level1.obj')
-  model2 = lovr.graphics.newModel('art/level2.obj')
-  model3 = lovr.graphics.newModel('art/level.obj')
+  model1 = lovr.graphics.newModel('art/island1.dae', 'art/island1.png')
+  model2 = lovr.graphics.newModel('art/island2.dae', 'art/island2.png')
+  model3 = lovr.graphics.newModel('art/island3.dae', 'art/island3.png')
   obstacle = lovr.graphics.newModel('art/obstacle.obj')
   bell = lovr.graphics.newModel('art/bell.obj', 'art/bell.png')
-  star = lovr.graphics.newModel('art/star.dae', 'art/gold.png')
+  bridge = lovr.graphics.newModel('art/arch.dae', 'art/arch.png')
+  halfbridge = lovr.graphics.newModel('art/arch-half.dae', 'art/arch-half.png')
+  shroom = lovr.graphics.newModel('art/shroom.dae', 'art/shroom.png')
 end
 
 function lovr.update(dt)
@@ -53,13 +56,14 @@ function lovr.draw()
   lovr.graphics.rotate(viewport.rotation)
 
   balloon:draw()
-  model1:draw(.3, 1, .3, .01)
-  model2:draw(-.3, 1, -.3, .0125)
-  model3:draw(.3, 1, -.3, .0125)
+  model1:draw(.3, 1, .3, .05)
+  model2:draw(-.3, 1, -.3, .05)
+  model3:draw(.3, 1, -.3, .05)
   obstacle:draw(-.3, 1, .3, .05)
   bell:draw(-.35, .95, .3, .01)
-  star:draw(.135, 1.25, -.23, .01)
-  star:draw(.2, .8, .1, .01)
+  bridge:draw(.3, .75, -.3, .05)
+  halfbridge:draw(-.3, 1, .13, .05, 1, 0, 1, 0)
+  shroom:draw(.3, 1.025, -.3, .005)
 
   shader:send('ambientColor', { .9, .9, .9 })
   for i = 1, #clouds do

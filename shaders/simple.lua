@@ -6,7 +6,7 @@ return lovr.graphics.newShader([[
   out vec3 rawNormal;
   out vec3 normalDirection;
 
-  uniform vec3 lightPosition = vec3(0, 3000, -3000);
+  uniform vec3 lightPosition = vec3(-1000, 3000, -3000);
   uniform mat4 zephyrView;
 
   vec4 position(mat4 projection, mat4 transform, vec4 vertex) {
@@ -44,7 +44,7 @@ return lovr.graphics.newShader([[
       specular = pow(specularAngle, 10.);
     }
 
-    vec3 finalColor = clamp(vec3(diffuse) * diffuseColor + vec3(specular) * specularColor, ambientColor, vec3(1.));
+    vec3 finalColor = pow(clamp(vec3(diffuse) * diffuseColor + vec3(specular) * specularColor, ambientColor, vec3(1.)), vec3(.4545));
 
     return vec4(finalColor, 1.) * graphicsColor * texture(image, uv);
   }
