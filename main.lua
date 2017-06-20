@@ -1,5 +1,7 @@
 local balloon = require 'balloon'
 local input = require 'input'
+local editor = require 'editor'
+local level = require 'level'
 
 viewport = {
   translation = 0,
@@ -13,6 +15,8 @@ function lovr.load()
   world = lovr.physics.newWorld()
   input:init()
   balloon:init()
+  level:init(require('levelOne'))
+  editor:init(level)
   lovr.graphics.setShader(require('shaders/simple'))
   lovr.graphics.setBackgroundColor(130, 200, 220)
   lovr.headset.setClipDistance(.01, 20)
@@ -25,21 +29,13 @@ function lovr.load()
     local z = math.sin(direction) * distance
     table.insert(clouds, { x, y, z })
   end
-
-  model1 = lovr.graphics.newModel('art/island1.dae', 'art/island1.png')
-  model2 = lovr.graphics.newModel('art/island2.dae', 'art/island2.png')
-  model3 = lovr.graphics.newModel('art/island3.dae', 'art/island3.png')
-  obstacle = lovr.graphics.newModel('art/obstacle.obj')
-  bell = lovr.graphics.newModel('art/bell.obj', 'art/bell.png')
-  bridge = lovr.graphics.newModel('art/arch.dae', 'art/arch.png')
-  halfbridge = lovr.graphics.newModel('art/arch-half.dae', 'art/arch-half.png')
-  shroom = lovr.graphics.newModel('art/shroom.dae', 'art/shroom.png')
 end
 
 function lovr.update(dt)
   input:update(dt)
   balloon:update(dt)
   world:update(dt)
+  editor:update(dt)
 end
 
 function lovr.draw()
@@ -49,21 +45,18 @@ function lovr.draw()
   viewport.viewMatrix:rotate(lovr.headset.getOrientation())
   shader:send('zephyrView', viewport.viewMatrix:inverse())
   shader:send('ambientColor', { .5, .5, .5 })
-  input:draw()
+
+  level:draw()
+
+  if not editor.active then
+    input:draw()
+  end
 
   lovr.graphics.push()
   lovr.graphics.translate(0, -viewport.translation, 0)
   lovr.graphics.rotate(viewport.rotation)
 
   balloon:draw()
-  model1:draw(.3, 1, .3, .05)
-  model2:draw(-.3, 1, -.3, .05)
-  model3:draw(.3, 1, -.3, .05)
-  obstacle:draw(-.3, 1, .3, .05)
-  bell:draw(-.35, .95, .3, .01)
-  bridge:draw(.3, .75, -.3, .05)
-  halfbridge:draw(-.3, 1, .13, .05, 1, 0, 1, 0)
-  shroom:draw(.3, 1.025, -.3, .005)
 
   shader:send('ambientColor', { .9, .9, .9 })
   for i = 1, #clouds do
@@ -76,10 +69,12 @@ end
 
 function lovr.controlleradded()
   input:refresh()
+  editor:refresh()
 end
 
 function lovr.controllerremoved()
   input:refresh()
+  editor:refresh()
 end
 
 tick = {
