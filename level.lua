@@ -14,6 +14,11 @@ function level:updateEntityPosition(entityIndex, x, y, z)
   t.x, t.y, t.z = x, y, z
 end
 
+function level:updateEntityScale(entityIndex, scaleMultiplier)
+  local t = self.data.entities[entityIndex].transform
+  t.scale = t.scale * scaleMultiplier
+end
+
 function level:draw()
   for i,entity in ipairs(self.data.entities) do
     local t = entity.transform
