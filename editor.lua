@@ -40,8 +40,8 @@ function editor:update(dt)
       if controller.object:getAxis('trigger') > 0 then
         if controller.drag.active then
           local newPosition = currentPosition + controller.drag.offset
-          t.x, t.y, t.z = newPosition:unpack()
-          self.level:updateEntityTransform(j)
+
+          self.level:updateEntityPosition(j, newPosition:unpack())
         elseif #offset:sub(currentPosition) < 1 then
           controller.drag.entity = entity
           controller.drag.active = true
