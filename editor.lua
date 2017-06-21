@@ -9,7 +9,8 @@ function editor:init(level)
   self.active = true
   self:refresh()
   self.level = level
-
+  self.isDirty = false
+  self.lastChange = lovr.timer.getTime()
 end
 
 function editor:refresh()
@@ -48,6 +49,7 @@ function editor:update(dt)
           controller.drag.offset:set(controller.drag.offset:scale(changeInDistance))
           initialDistance = d
           self.level:updateEntityScale(j, changeInDistance)
+          self:dirty()
         else
           initialDistance = (self.controllers[1].currentPosition - self.controllers[2].currentPosition):length()
         end
@@ -55,6 +57,7 @@ function editor:update(dt)
         if controller.drag.active then
           local newPosition = controller.currentPosition + controller.drag.offset
           self.level:updateEntityPosition(j, newPosition:unpack())
+          self:dirty()
         elseif #offset:sub(controller.currentPosition) < 1 then
           controller.drag.entity = entity
           controller.drag.active = true
@@ -66,6 +69,11 @@ function editor:update(dt)
       end
     end
   end
+
+  if self.isDirty and lovr.timer.getTime() - self.lastChange > 3 then
+    self.level:save()
+    self.isDirty = false
+  end
 end
 
 function editor:bothControllersTriggered()
@@ -76,5 +84,9 @@ function editor:triggered(controller)
   return controller.object:getAxis('trigger') > 0
 end
 
+function editor:dirty()
+  self.isDirty = true
+  self.lastChange = lovr.timer.getTime()
+end
 
 return editor

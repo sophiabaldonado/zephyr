@@ -15,7 +15,7 @@ function lovr.load()
   world = lovr.physics.newWorld()
   input:init()
   balloon:init()
-  level:init(require('levelOne'))
+  level:init('levels/1.json')
   editor:init(level)
   lovr.graphics.setShader(require('shaders/simple'))
   lovr.graphics.setBackgroundColor(130, 200, 220)
@@ -75,6 +75,10 @@ end
 function lovr.controllerremoved()
   input:refresh()
   editor:refresh()
+end
+
+function lovr.quit()
+  if editor.isDirty then level:save() end
 end
 
 tick = {
