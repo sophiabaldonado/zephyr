@@ -1,12 +1,15 @@
 local json = require('json')
 local level = {}
+local vector = require('maf').vector
+
+local position = vector() 
 
 function level:init(filename)
   self:load(filename)
-  self.models = {}
 
   for i, entity in ipairs(self.data.entities) do
-    self.models[i] = lovr.graphics.newModel(entity.model, entity.texture)
+    entity.model = lovr.graphics.newModel(entity.modelPath, entity.texturePath)
+    entity.lastPosition = vector()
   end
 end
 
@@ -23,12 +26,22 @@ end
 function level:draw()
   for i, entity in ipairs(self.data.entities) do
     local t = entity.transform
-    self.models[i]:draw(t.x, t.y, t.z, t.scale, t.angle, t.ax, t.ay, t.az)
+    position:set(t.x, t.y, t.z)
+    position:lerp(entity.lastPosition, 1 - tick.accum / tick.rate)
+
+    entity.model:draw(position.x, position.y, position.z, t.scale, t.angle, t.ax, t.ay, t.az)
+  end
+end
+
+function level:update()
+  for i,entity in ipairs(self.data.entites) do
+    local t = entity.transform
+    entity.lastPosition:set(t.x, t.y, t.z)
   end
 end
 
 function level:save()
-  lovr.filesystem.write(filename, json.encode(self.data))
+  --lovr.filesystem.write(self.filename, json.encode(self.data))
 end
 
 function level:load(filename)

@@ -35,6 +35,7 @@ function lovr.update(dt)
   input:update(dt)
   balloon:update(dt)
   world:update(dt)
+  level:update(dt)
   editor:update(dt)
 end
 
