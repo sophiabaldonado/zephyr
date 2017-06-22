@@ -1,6 +1,7 @@
 local editor = {}
 local maf = require 'maf'
 local vector = maf.vector
+local quaternion = maf.quat
 
 local offset = vector()
 local initialDistance = 0
@@ -29,7 +30,8 @@ function editor:refresh()
         active = false
       },
       rotate = {
-        active = false
+        active = false,
+        lastPosition = vector()
       }
     }
   end
@@ -73,17 +75,16 @@ function editor:update(dt)
       end
 
       if controller.object:isDown('grip') and self:nearEntity(controller) then
-        if controller.rotate.active then
-          local ogAngle = entity.transform.angle
-        elseif true then
-          controller.rotate.active = true
-        else
-          controller.rotate.active = false
-        end
+        local entityPosition = vector(t.x, t.y, t.z)
 
+        local d1 = (controller.currentPosition - entityPosition):normalize()
+        local d2 = (controller.rotate.lastPosition - entityPosition):normalize()
+        local rotation = quaternion():between(d2, d1)
+
+        self.level:updateEntityRotation(j, rotation)
       end
-
     end
+    controller.rotate.lastPosition:set(controller.currentPosition)
   end
 
   if self.isDirty and lovr.timer.getTime() - self.lastChange > 3 then

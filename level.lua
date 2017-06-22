@@ -1,5 +1,6 @@
 local json = require('json')
 local vector = require('maf').vector
+local quaternion = require('maf').quat
 local level = {}
 local defaultFilename = 'levels/default.json'
 local position = vector() 
@@ -21,6 +22,13 @@ end
 function level:updateEntityScale(entityIndex, scaleMultiplier)
   local t = self.data.entities[entityIndex].transform
   t.scale = t.scale * scaleMultiplier
+end
+
+function level:updateEntityRotation(entityIndex, rotation)
+  local t = self.data.entities[entityIndex].transform
+  local ogRotation = quaternion():angleAxis(t.angle, t.ax, t.ay, t.az)
+  
+  t.angle, t.ax, t.ay, t.az = (rotation * ogRotation):getAngleAxis()
 end
 
 function level:draw()
