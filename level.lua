@@ -1,7 +1,7 @@
 local json = require('json')
-local level = {}
 local vector = require('maf').vector
-
+local level = {}
+local defaultFilename = 'levels/default.json'
 local position = vector() 
 
 function level:init(filename)
@@ -34,18 +34,32 @@ function level:draw()
 end
 
 function level:update()
-  for i,entity in ipairs(self.data.entites) do
+  for i,entity in ipairs(self.data.entities) do
     local t = entity.transform
     entity.lastPosition:set(t.x, t.y, t.z)
   end
 end
 
 function level:save()
-  --lovr.filesystem.write(self.filename, json.encode(self.data))
+  local saveData = {}
+  saveData.name = self.data.name
+  saveData.entities = {}
+
+  for i,entitty in ipairs(self.data.entities) do
+    saveData.entities[i] = {
+      transform = entitty.transform,
+      modelPath = entitty.modelPath,
+      texturePath = entitty.texturePath
+    }
+  end 
+
+  lovr.filesystem.createDirectory('levels')
+  lovr.filesystem.write(self.filename, json.encode(saveData))
 end
 
 function level:load(filename)
   self.filename = filename
+  filename = lovr.filesystem.exists(filename) and filename or defaultFilename
   self.data = json.decode(lovr.filesystem.read(filename))
 end
 
