@@ -25,18 +25,28 @@ end
 
 function level:draw()
   for i, entity in ipairs(self.data.entities) do
+    local lerped = self:lerp(entity)
+    local t = entity.transform
+    entity.model:draw(lerped.x, lerped.y, lerped.z, lerped.scale, t.angle, t.ax, t.ay, t.az)
+  end
+end
+
+function level:lerp(entity)
     local t = entity.transform
     position:set(t.x, t.y, t.z)
     position:lerp(entity.lastPosition, 1 - tick.accum / tick.rate)
 
-    entity.model:draw(position.x, position.y, position.z, t.scale, t.angle, t.ax, t.ay, t.az)
-  end
+    local scale = t.scale
+    local s = scale + (entity.lastScale - scale) *  (1 - tick.accum / tick.rate)
+
+    return { x = position.x, y = position.y, z = position.z, scale = s }
 end
 
 function level:update()
   for i,entity in ipairs(self.data.entities) do
     local t = entity.transform
     entity.lastPosition:set(t.x, t.y, t.z)
+    entity.lastScale = entity.transform.scale
   end
 end
 
