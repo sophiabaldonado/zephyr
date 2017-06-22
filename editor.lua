@@ -72,9 +72,10 @@ function editor:update(dt)
         controller.drag.active = false
       end
 
-      if controller.object:isDown('grip') and self:nearEntity(controller)
+      if controller.object:isDown('grip') and self:nearEntity(controller) then
         if controller.rotate.active then
-        elseif
+          local ogAngle = entity.transform.angle
+        elseif true then
           controller.rotate.active = true
         else
           controller.rotate.active = false
