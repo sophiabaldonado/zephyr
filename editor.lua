@@ -24,6 +24,12 @@ function editor:refresh()
         active = false,
         entity = nil,
         offset = vector()
+      },
+      scale = {
+        active = false
+      },
+      rotate = {
+        active = false
       }
     }
   end
@@ -40,16 +46,14 @@ function editor:update(dt)
       local t = entity.transform
       offset:set(t.x, t.y, t.z)
 
-
-      if self:bothControllersTriggered() then
-
+      if self:bothControllersTriggered() and self:nearEntity(controller) then
         if initialDistance > 0 then
           local d = self.controllers[1].currentPosition:distance(self.controllers[2].currentPosition)
           local changeInDistance = (d / initialDistance)
-          controller.drag.offset:set(controller.drag.offset:scale(changeInDistance))
           initialDistance = d
           self.level:updateEntityScale(j, changeInDistance)
           self:dirty()
+          controller.drag.offset:set(controller.drag.offset:scale(changeInDistance))
         else
           initialDistance = (self.controllers[1].currentPosition - self.controllers[2].currentPosition):length()
         end
@@ -58,7 +62,7 @@ function editor:update(dt)
           local newPosition = controller.currentPosition + controller.drag.offset
           self.level:updateEntityPosition(j, newPosition:unpack())
           self:dirty()
-        elseif #offset:sub(controller.currentPosition) < 1 then
+        elseif self:nearEntity(controller) then
           controller.drag.entity = entity
           controller.drag.active = true
           controller.drag.offset:set(offset)
@@ -67,6 +71,17 @@ function editor:update(dt)
         initialDistance = 0
         controller.drag.active = false
       end
+
+      if controller.object:isDown('grip') and self:nearEntity(controller)
+        if controller.rotate.active then
+        elseif
+          controller.rotate.active = true
+        else
+          controller.rotate.active = false
+        end
+
+      end
+
     end
   end
 
@@ -74,6 +89,10 @@ function editor:update(dt)
     self.level:save()
     self.isDirty = false
   end
+end
+
+function editor:nearEntity(controller)
+  return #offset:sub(controller.currentPosition) < 1
 end
 
 function editor:bothControllersTriggered()
