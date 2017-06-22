@@ -11,6 +11,7 @@ function level:init(filename)
   for i, entity in ipairs(self.data.entities) do
     entity.model = lovr.graphics.newModel(entity.modelPath, entity.texturePath)
     entity.lastPosition = vector()
+    entity.lastRotation = quaternion()
   end
 end
 
@@ -35,7 +36,7 @@ function level:draw()
   for i, entity in ipairs(self.data.entities) do
     local lerped = self:lerp(entity)
     local t = entity.transform
-    entity.model:draw(lerped.x, lerped.y, lerped.z, lerped.scale, t.angle, t.ax, t.ay, t.az)
+    entity.model:draw(lerped.x, lerped.y, lerped.z, lerped.scale, lerped.angle, lerped.ax, lerped.ay, lerped.az)
   end
 end
 
@@ -47,7 +48,11 @@ function level:lerp(entity)
     local scale = t.scale
     local s = scale + (entity.lastScale - scale) *  (1 - tick.accum / tick.rate)
 
-    return { x = position.x, y = position.y, z = position.z, scale = s }
+    local rot = quaternion():angleAxis(t.angle, t.ax, t.ay, t.az)
+    rot:slerp(entity.lastRotation, 1 - tick.accum / tick.rate)
+    local angle, ax, ay, az = rot:getAngleAxis()
+
+    return { x = position.x, y = position.y, z = position.z, scale = s, angle = angle, ax = ax, ay = ay, az = az }
 end
 
 function level:update()
@@ -55,6 +60,7 @@ function level:update()
     local t = entity.transform
     entity.lastPosition:set(t.x, t.y, t.z)
     entity.lastScale = entity.transform.scale
+    entity.lastRotation:angleAxis(t.angle, t.ax, t.ay, t.az)
   end
 end
 
