@@ -12,6 +12,7 @@ function editor:init(level)
   self.level = level
   self.isDirty = false
   self.lastChange = lovr.timer.getTime()
+  self.satchel = editor:generateEntities()
 end
 
 function editor:refresh()
@@ -104,7 +105,7 @@ function editor:update(dt)
 end
 
 function editor:nearEntity(controller)
-  return (#offset - controller.currentPosition) < 1
+  return #offset:sub(controller.currentPosition) < .5
 end
 
 function editor:bothControllersTriggered()
@@ -118,6 +119,56 @@ end
 function editor:dirty()
   self.isDirty = true
   self.lastChange = lovr.timer.getTime()
+end
+
+function editor:generateEntities()
+  local modelPath = 'art/models/'
+  local texturePath = 'art/textures/'
+  local modelNames = lovr.filesystem.getDirectoryItems(modelPath)
+  local textureNames = lovr.filesystem.getDirectoryItems(texturePath)
+  local entityNames = {}
+  for i,modelName in ipairs(modelNames) do
+    local name = modelName:sub(1, -5)
+    entityNames[i] = name
+  end
+
+  textures = {}
+  for i, textureName in ipairs(textureNames) do
+    local name = textureName:sub(1, -5)
+    textures[name] = textureName
+  end
+  models = {}
+  for i, modelName in ipairs(modelNames) do
+    local name = modelName:sub(1, -5)
+    models[name] = modelName
+  end
+  
+  local entities = {}
+  for i, name in ipairs(entityNames) do
+    local texturePathOrNil = textures[name] and texturePath..textures[name] or nil
+    entities[i] = {
+      modelPath = modelPath..models[name],
+      texturePath = texturePathOrNil,
+      transform = {
+        x = 0,
+        y = 1.5,
+        z = 0,
+        scale = .1,
+        angle = 0,
+        ax = 0,
+        ay = 0,
+        az = 0
+      }
+    }
+  end
+
+  -- print(entityNames)
+  -- for i, name in ipairs(textureNames) do
+
+  --   print(name)
+  -- end
+
+  return entities
 end
 
 return editor

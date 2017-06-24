@@ -9,7 +9,7 @@ function level:init(filename)
   self:load(filename)
 
   for i, entity in ipairs(self.data.entities) do
-    entity.model = lovr.graphics.newModel(entity.modelPath, entity.texturePath)
+    entity.model = entity.texturePath and lovr.graphics.newModel(entity.modelPath, entity.texturePath) or lovr.graphics.newModel(entity.modelPath)
     entity.lastPosition = vector()
     entity.lastRotation = quaternion()
   end
@@ -30,6 +30,16 @@ function level:updateEntityRotation(entityIndex, rotation)
   local ogRotation = quaternion():angleAxis(t.angle, t.ax, t.ay, t.az)
   
   t.angle, t.ax, t.ay, t.az = (rotation * ogRotation):getAngleAxis()
+end
+
+function level:addEntity(entityData)
+  local newEntity = entityData
+  newEntity.lastPosition = vector()
+  newEntity.lastRotation = quaternion()
+  
+  newEntity.model = newEntity.texturePath and lovr.graphics.newModel(newEntity.modelPath, newEntity.texturePath) or lovr.graphics.newModel(newEntity.modelPath)
+
+  table.insert(self.data.entities, newEntity)
 end
 
 function level:draw()
@@ -69,11 +79,11 @@ function level:save()
   saveData.name = self.data.name
   saveData.entities = {}
 
-  for i,entitty in ipairs(self.data.entities) do
+  for i,entity in ipairs(self.data.entities) do
     saveData.entities[i] = {
-      transform = entitty.transform,
-      modelPath = entitty.modelPath,
-      texturePath = entitty.texturePath
+      transform = entity.transform,
+      modelPath = entity.modelPath,
+      texturePath = entity.texturePath
     }
   end 
 
@@ -86,5 +96,6 @@ function level:load(filename)
   filename = lovr.filesystem.exists(filename) and filename or defaultFilename
   self.data = json.decode(lovr.filesystem.read(filename))
 end
+
 
 return level
