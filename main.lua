@@ -48,6 +48,7 @@ function lovr.draw()
   shader:send('ambientColor', { .5, .5, .5 })
 
   level:draw()
+  editor:draw()
 
   if not editor.active then
     input:draw()

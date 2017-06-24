@@ -21,9 +21,9 @@ function editor:refresh()
     self.controllers[i] = {
       object = controller,
       currentPosition = vector(),
+      entity = nil,
       drag = {
         active = false,
-        entity = nil,
         offset = vector()
       },
       scale = {
@@ -38,7 +38,14 @@ function editor:refresh()
 end
 
 function editor:draw()
-
+  for i, controller in ipairs(self.controllers) do
+    if controller.object:isDown('grip') and controller.entity then
+      lovr.graphics.setLineWidth(4)
+      local t = entity.transform
+      local c = controller.currentPosition
+      lovr.graphics.line(t.x, t.y, t.z, c.x, c.y, c.z)
+    end
+  end
 end
 
 function editor:update(dt)
@@ -47,6 +54,10 @@ function editor:update(dt)
     for j,entity in ipairs(self.level.data.entities) do
       local t = entity.transform
       offset:set(t.x, t.y, t.z)
+
+      -- if self:nearEntity(controller) then
+      --   controller.entity = entity
+      -- end
 
       if self:bothControllersTriggered() and self:nearEntity(controller) then
         if initialDistance > 0 then
@@ -65,7 +76,6 @@ function editor:update(dt)
           self.level:updateEntityPosition(j, newPosition:unpack())
           self:dirty()
         elseif self:nearEntity(controller) then
-          controller.drag.entity = entity
           controller.drag.active = true
           controller.drag.offset:set(offset)
         end
@@ -94,7 +104,7 @@ function editor:update(dt)
 end
 
 function editor:nearEntity(controller)
-  return #offset:sub(controller.currentPosition) < 1
+  return (#offset - controller.currentPosition) < 1
 end
 
 function editor:bothControllersTriggered()
