@@ -23,7 +23,7 @@ local function affine(x, min, max)
 end
 
 function balloon:init()
-  self.model = lovr.graphics.newModel('art/mobile_balloon.obj', 'art/mobile_DIFF.png')
+  self.model = lovr.graphics.newModel('art/models/mobile_balloon.obj', 'art/textures/mobile_balloon.png')
 
   self.collider = world:newCollider()
   self.collider:setMass(50)

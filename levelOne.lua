@@ -2,8 +2,8 @@ return {
 	name = 'Bing Bong',
 	entities = {
     {
-      model = 'art/arch.dae',
-      texture = 'art/arch.png',
+      model = 'art/models/arch.dae',
+      texture = 'art/models/arch.png',
       transform = {
         x = 0,
         y = 0,
