@@ -6,10 +6,9 @@ local quaternion = maf.quat
 local util = require 'util'
 
 Editor.grabRange = .3
-Editor.satchelItemSize = .1
+Editor.satchelItemSize = .075
 Editor.menuOpen = false
 Editor.menuController = {}
-Editor.menuController.rotation = quaternion()
 
 function Editor:init(level)
   self.active = true
@@ -51,8 +50,7 @@ function Editor:controllerpressed(controller, button)
   if button == 'menu' and not self.menuOpen then
     self.menuOpen = true
     self.menuController = controller
-    self.menuController.position = vector()
-    self.menuController.position:set(controller.currentPosition)
+    self:setSatchelItemsOffsets()
   elseif button =='menu' then
     self.menuOpen = false
   end
@@ -149,7 +147,7 @@ function Editor:generateEntities()
     models[name] = modelName
   end
 
-  local grid = self:createGrid(#modelNames)
+  local grid = self:createMenuGrid(#modelNames)
   local entities = {}
   for i, name in ipairs(entityNames) do
     local texturePathOrNil = textures[name] and texturePath..textures[name] or nil
@@ -175,23 +173,32 @@ function Editor:generateEntities()
   return entities
 end
 
-function Editor:createGrid(total)
-  local spacing = self.satchelItemSize * 3
-  local rowCount = 10
+function Editor:createMenuGrid(total)
+  local spacing = self.satchelItemSize * 2.5
+  local rowCount = 6
+  local radius = .5
 
   local grid = {}
-  local startingY = 1.75
+  local startingY = 1.5
   local y = startingY
   for i = 1, total, rowCount do
     for j = 1, rowCount do
-      local angle = (((j - 1) / (rowCount - 1)) - 1) * 2
-      local x = math.sin(angle)
-      local z = math.cos(angle)
+      local angle = (((j - 1) / (rowCount - 1)) - 1) * 1.25
+      local x = math.sin(angle) * radius
+      local z = math.cos(angle) * radius
       table.insert(grid, { x = x, y = y, z = z })
     end
     y = y - spacing
   end
   return grid
+end
+
+function Editor:setSatchelItemsOffsets()
+  for i, entity in ipairs(self.satchel) do
+    local t = entity.transform
+    local pos = self.menuController.currentPosition
+    t.x, t.z = t.x + pos.x, t.z + pos.z
+  end
 end
 
 function Editor:drawSatchel()
