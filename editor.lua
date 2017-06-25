@@ -5,7 +5,7 @@ local vector = maf.vector
 local quaternion = maf.quat
 local util = require 'util'
 
-Editor.grabRange = .5
+Editor.grabRange = .3
 Editor.satchelItemSize = .1
 Editor.menuOpen = false
 Editor.menuController = {}
@@ -23,7 +23,6 @@ end
 function Editor:update(dt)
   self:updateControllers()
   self:checkSave()
-
 end
 
 function Editor:draw()
@@ -39,7 +38,7 @@ function Editor:controllerpressed(controller, button)
 
   if entity then
     if button == 'trigger' then
-      if otherController.drag.active and otherController.activeEntity == entity then
+      if otherController and otherController.drag.active and otherController.activeEntity == entity then
         self:beginScale(controller, entity)
       else
         self:beginDrag(controller, entity)
@@ -54,8 +53,15 @@ function Editor:controllerpressed(controller, button)
     self.menuController = controller
     self.menuController.position = vector()
     self.menuController.position:set(controller.currentPosition)
-  else
+  elseif button =='menu' then
     self.menuOpen = false
+  end
+
+  local satchelItem = self:getClosestSatchelItemInRange(self.satchelItemSize, controller.object:getPosition())
+  if self.menuOpen and satchelItem then
+    if button == 'trigger' then
+      self.level:addEntity(util.copy(satchelItem))
+    end
   end
 end
 
@@ -170,18 +176,20 @@ function Editor:generateEntities()
 end
 
 function Editor:createGrid(total)
-  local spacing = self.satchelItemSize + self.satchelItemSize / 2
+  local spacing = self.satchelItemSize * 3
   local rowCount = 10
 
   local grid = {}
   local startingY = 1.75
+  local y = startingY
   for i = 1, total, rowCount do
-    y = startingY - spacing
     for j = 1, rowCount do
-      local x = math.sin(j / rowCount)
-      local z = math.cos(j / rowCount)
+      local angle = (((j - 1) / (rowCount - 1)) - 1) * 2
+      local x = math.sin(angle)
+      local z = math.cos(angle)
       table.insert(grid, { x = x, y = y, z = z })
     end
+    y = y - spacing
   end
   return grid
 end
@@ -189,9 +197,7 @@ end
 function Editor:drawSatchel()
   for i, entity in ipairs(self.satchel) do
     local t = entity.transform
-    local x, y, z = self.menuController.position:unpack()
-    -- local angleAxis = self.menuController.rotation:getAngleAxis()
-    entity.model:draw(t.x, t.y, t.z, t.scale, 0, 0, 0, 0)
+    entity.model:draw(t.x, t.y, t.z, t.scale, lovr.timer.getTime() / 5, 0, 1, 0)
   end
 end
 
@@ -201,6 +207,18 @@ function Editor:constrainScale(model)
   local max = math.max(width, height, depth)
 
   return self.satchelItemSize / max
+end
+
+function Editor:getClosestSatchelItemInRange(range, x, y, z)
+  local minDistance, closestEntity = range ^ 2, nil
+  util.each(self.satchel, function(entity)
+    local d = (x - entity.transform.x) ^ 2 + (y - entity.transform.y) ^ 2 + (z - entity.transform.z) ^ 2
+    if d < minDistance then
+      minDistance = d
+      closestEntity = entity
+    end
+  end)
+  return closestEntity, math.sqrt(minDistance)
 end
 
 function Editor:getOtherController(controller)
@@ -227,8 +245,16 @@ function Editor:beginDrag(controller, entity)
 end
 
 function Editor:updateDrag(controller)
-  if controller.scale.active or self:getOtherController(controller).scale.active then return end
+  local otherController = self:getOtherController(controller)
+  if controller.scale.active or otherController and otherController.scale.active then return end
   local newPosition = controller.currentPosition + controller.drag.offset
+  -- snapping!
+  -- newPosition.x = math.floor(newPosition.x / .1 + .5) * .1
+  -- newPosition.y = math.floor(newPosition.y / .1 + .5) * .1
+  -- newPosition.z = math.floor(newPosition.z / .1 + .5) * .1
+  -- if newPosition.x ~= controller.activeEntity.transform.x or newPosition.y ~= controller.activeEntity.transform.y or newPosition.z ~= controller.activeEntity.transform.z then
+    -- controller.object:vibrate(.001)
+  -- end
   self.level:updateEntityPosition(controller.activeEntity.index, newPosition:unpack())
   self:dirty()
 end
@@ -261,9 +287,8 @@ end
 function Editor:beginScale(controller, entity)
   controller.scale.active = true
   controller.activeEntity = entity
-  if self:getOtherController(controller) then
-    controller.scale.lastDistance = (controller.currentPosition - otherController.currentPosition):length()
-  end
+  local otherController = self:getOtherController(controller)
+  controller.scale.lastDistance = (controller.currentPosition - otherController.currentPosition):length()
 end
 
 function Editor:updateScale(controller)
