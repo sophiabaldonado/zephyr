@@ -9,6 +9,7 @@ function level:init(filename)
   self:load(filename)
 
   for i, entity in ipairs(self.data.entities) do
+    entity.index = i
     entity.model = entity.texturePath and lovr.graphics.newModel(entity.modelPath, entity.texturePath) or lovr.graphics.newModel(entity.modelPath)
     entity.lastPosition = vector()
     entity.lastRotation = quaternion()
@@ -40,6 +41,7 @@ function level:addEntity(entityData)
   newEntity.model = newEntity.texturePath and lovr.graphics.newModel(newEntity.modelPath, newEntity.texturePath) or lovr.graphics.newModel(newEntity.modelPath)
 
   table.insert(self.data.entities, newEntity)
+  newEntity.index = #self.data.entities
 end
 
 function level:draw()

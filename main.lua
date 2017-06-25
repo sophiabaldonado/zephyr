@@ -71,12 +71,20 @@ end
 
 function lovr.controlleradded()
   input:refresh()
-  editor:refresh()
+  editor:refreshControllers()
 end
 
 function lovr.controllerremoved()
   input:refresh()
-  editor:refresh()
+  editor:refreshControllers()
+end
+
+function lovr.controllerpressed(...)
+  editor:controllerpressed(...)
+end
+
+function lovr.controllerreleased(...)
+  editor:controllerreleased(...)
 end
 
 function lovr.quit()

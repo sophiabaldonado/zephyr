@@ -1,127 +1,113 @@
-local editor = {}
+local Editor = {}
+
 local maf = require 'maf'
 local vector = maf.vector
 local quaternion = maf.quat
+local util = require 'util'
 
-local offset = vector()
-local initialDistance = 0
+Editor.grabRange = .5
 
-function editor:init(level)
+function Editor:init(level)
   self.active = true
-  self:refresh()
+  self:refreshControllers()
   self.level = level
   self.isDirty = false
   self.lastChange = lovr.timer.getTime()
-  self.satchel = editor:generateEntities()
+  self.satchel = self:generateEntities()
 end
 
-function editor:refresh()
+function Editor:update(dt)
+  self:updateControllers()
+  self:checkSave()
+end
+
+function Editor:draw()
+  --
+end
+
+function Editor:controllerpressed(controller, button)
+  controller = self.controllers[controller]
+  local otherController = self:getOtherController(controller)
+  button = button or 'trigger'
+
+  local entity = self:getClosestEntityInRange(self.grabRange, controller.object:getPosition())
+
+  if entity then
+    if button == 'trigger' then
+      if otherController.drag.active and otherController.activeEntity == entity then
+        self:beginScale(controller, entity)
+      else
+        self:beginDrag(controller, entity)
+      end
+    elseif button == 'grip' then
+      self:beginRotate(controller, entity)
+    end
+  end
+end
+
+function Editor:controllerreleased(controller, button)
+  controller = self.controllers[controller]
+  button = button or 'trigger'
+
+  if button == 'trigger' then
+    self:endScale(controller)
+    self:endDrag(controller)
+  elseif button == 'grip' then
+    self:endRotate(controller)
+  end
+end
+
+function Editor:refreshControllers()
   self.controllers = {}
 
   for i, controller in ipairs(lovr.headset.getControllers()) do
-    self.controllers[i] = {
+    self.controllers[controller] = {
+      index = i,
       object = controller,
       currentPosition = vector(),
-      entity = nil,
+      lastPosition = vector(),
+      activeEntity = nil,
       drag = {
         active = false,
         offset = vector()
       },
       scale = {
-        active = false
+        active = false,
+        lastDistance = 0
       },
       rotate = {
         active = false,
-        lastPosition = vector()
       }
     }
+    table.insert(self.controllers, self.controllers[controller])
   end
 end
 
-function editor:draw()
-  for i, controller in ipairs(self.controllers) do
-    if controller.object:isDown('grip') and controller.entity then
-      lovr.graphics.setLineWidth(4)
-      local t = entity.transform
-      local c = controller.currentPosition
-      lovr.graphics.line(t.x, t.y, t.z, c.x, c.y, c.z)
-    end
-  end
-end
-
-function editor:update(dt)
-  for i,controller in ipairs(self.controllers) do
+function Editor:updateControllers()
+  util.each(self.controllers, function(controller)
     controller.currentPosition:set(controller.object:getPosition())
-    for j,entity in ipairs(self.level.data.entities) do
-      local t = entity.transform
-      offset:set(t.x, t.y, t.z)
 
-      -- if self:nearEntity(controller) then
-      --   controller.entity = entity
-      -- end
+    if controller.drag.active then self:updateDrag(controller) end
+    if controller.rotate.active then self:updateRotate(controller) end
+    if controller.scale.active then self:updateScale(controller) end
 
-      if self:bothControllersTriggered() and self:nearEntity(controller) then
-        if initialDistance > 0 then
-          local d = self.controllers[1].currentPosition:distance(self.controllers[2].currentPosition)
-          local changeInDistance = (d / initialDistance)
-          initialDistance = d
-          self.level:updateEntityScale(j, changeInDistance)
-          self:dirty()
-          controller.drag.offset:set(controller.drag.offset:scale(changeInDistance))
-        else
-          initialDistance = (self.controllers[1].currentPosition - self.controllers[2].currentPosition):length()
-        end
-      elseif self:triggered(controller) then
-        if controller.drag.active then
-          local newPosition = controller.currentPosition + controller.drag.offset
-          self.level:updateEntityPosition(j, newPosition:unpack())
-          self:dirty()
-        elseif self:nearEntity(controller) then
-          controller.drag.active = true
-          controller.drag.offset:set(offset)
-        end
-      else
-        initialDistance = 0
-        controller.drag.active = false
-      end
+    controller.lastPosition:set(controller.currentPosition)
+  end, ipairs)
+end
 
-      if controller.object:isDown('grip') and self:nearEntity(controller) then
-        local entityPosition = vector(t.x, t.y, t.z)
-
-        local d1 = (controller.currentPosition - entityPosition):normalize()
-        local d2 = (controller.rotate.lastPosition - entityPosition):normalize()
-        local rotation = quaternion():between(d2, d1)
-
-        self.level:updateEntityRotation(j, rotation)
-      end
-    end
-    controller.rotate.lastPosition:set(controller.currentPosition)
-  end
-
+function Editor:checkSave()
   if self.isDirty and lovr.timer.getTime() - self.lastChange > 3 then
     self.level:save()
     self.isDirty = false
   end
 end
 
-function editor:nearEntity(controller)
-  return #offset:sub(controller.currentPosition) < .5
-end
-
-function editor:bothControllersTriggered()
-  return #self.controllers == 2 and self:triggered(self.controllers[1]) and self:triggered(self.controllers[2])
-end
-
-function editor:triggered(controller)
-  return controller.object:getAxis('trigger') > 0
-end
-
-function editor:dirty()
+function Editor:dirty()
   self.isDirty = true
   self.lastChange = lovr.timer.getTime()
 end
 
-function editor:generateEntities()
+function Editor:generateEntities()
   local modelPath = 'art/models/'
   local texturePath = 'art/textures/'
   local modelNames = lovr.filesystem.getDirectoryItems(modelPath)
@@ -162,13 +148,90 @@ function editor:generateEntities()
     }
   end
 
-  -- print(entityNames)
-  -- for i, name in ipairs(textureNames) do
-
-  --   print(name)
-  -- end
-
   return entities
 end
 
-return editor
+function Editor:getOtherController(controller)
+  return self.controllers[3 - controller.index]
+end
+
+function Editor:getClosestEntityInRange(range, x, y, z)
+  local minDistance, closestEntity = range ^ 2, nil
+  util.each(self.level.data.entities, function(entity)
+    local d = (x - entity.transform.x) ^ 2 + (y - entity.transform.y) ^ 2 + (z - entity.transform.z) ^ 2
+    if d < minDistance then
+      minDistance = d
+      closestEntity = entity
+    end
+  end)
+  return closestEntity, math.sqrt(minDistance)
+end
+
+function Editor:beginDrag(controller, entity)
+  local entityPosition = vector(entity.transform.x, entity.transform.y, entity.transform.z)
+  controller.activeEntity = entity
+  controller.drag.active = true
+  controller.drag.offset = entityPosition - controller.currentPosition
+end
+
+function Editor:updateDrag(controller)
+  if controller.scale.active or self:getOtherController(controller).scale.active then return end
+  local newPosition = controller.currentPosition + controller.drag.offset
+  self.level:updateEntityPosition(controller.activeEntity.index, newPosition:unpack())
+  self:dirty()
+end
+
+function Editor:endDrag(controller)
+  controller.drag.active = false
+end
+
+function Editor:beginRotate(controller, entity)
+  controller.activeEntity = entity
+  controller.rotate.active = true
+end
+
+function Editor:updateRotate(controller)
+  local t = controller.activeEntity.transform
+  local entityPosition = vector(t.x, t.y, t.z)
+
+  local d1 = (controller.currentPosition - entityPosition):normalize()
+  local d2 = (controller.lastPosition - entityPosition):normalize()
+  local rotation = quaternion():between(d2, d1)
+
+  self.level:updateEntityRotation(controller.activeEntity.index, rotation)
+  self:dirty()
+end
+
+function Editor:endRotate(controller)
+  controller.rotate.active = false
+end
+
+function Editor:beginScale(controller, entity)
+  controller.scale.active = true
+  controller.activeEntity = entity
+  controller.scale.lastDistance = (controller.currentPosition - self:getOtherController(controller).currentPosition):length()
+end
+
+function Editor:updateScale(controller)
+  local currentDistance = controller.currentPosition:distance(self:getOtherController(controller).currentPosition)
+  local distanceRatio = (currentDistance / controller.scale.lastDistance)
+  controller.scale.lastDistance = currentDistance
+
+  self.level:updateEntityScale(controller.activeEntity.index, distanceRatio)
+  self:dirty()
+end
+
+function Editor:endScale(controller)
+  local otherController = self:getOtherController(controller)
+
+  otherController.scale.active = false
+  if otherController.drag.active then
+    local entity = otherController.activeEntity
+    local entityPosition = vector(entity.transform.x, entity.transform.y, entity.transform.z)
+    otherController.drag.offset = entityPosition - otherController.currentPosition
+  end
+
+  controller.scale.active = false
+end
+
+return Editor
