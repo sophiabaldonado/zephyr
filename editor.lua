@@ -209,7 +209,9 @@ end
 function Editor:beginScale(controller, entity)
   controller.scale.active = true
   controller.activeEntity = entity
-  controller.scale.lastDistance = (controller.currentPosition - self:getOtherController(controller).currentPosition):length()
+  if self:getOtherController(controller) then
+    controller.scale.lastDistance = (controller.currentPosition - otherController.currentPosition):length()
+  end
 end
 
 function Editor:updateScale(controller)
@@ -224,11 +226,13 @@ end
 function Editor:endScale(controller)
   local otherController = self:getOtherController(controller)
 
-  otherController.scale.active = false
-  if otherController.drag.active then
-    local entity = otherController.activeEntity
-    local entityPosition = vector(entity.transform.x, entity.transform.y, entity.transform.z)
-    otherController.drag.offset = entityPosition - otherController.currentPosition
+  if otherController then
+    otherController.scale.active = false
+    if otherController.drag.active then
+      local entity = otherController.activeEntity
+      local entityPosition = vector(entity.transform.x, entity.transform.y, entity.transform.z)
+      otherController.drag.offset = entityPosition - otherController.currentPosition
+    end
   end
 
   controller.scale.active = false

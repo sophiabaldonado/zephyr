@@ -12,8 +12,8 @@ local up = vector(0, 1, 0)
 input = {}
 
 function input:init()
-  input.fanBase = lovr.graphics.newModel('art/models/fan-body.dae')
-  input.fanBlades = lovr.graphics.newModel('art/models/fan-blades.dae')
+  input.fanBase = lovr.graphics.newModel('art/fan-body.dae')
+  input.fanBlades = lovr.graphics.newModel('art/fan-blades.dae')
   input.rotationOffset = quaternion():angleAxis(-math.pi / 2, 1, 0, 0)
   self:refresh()
 end
