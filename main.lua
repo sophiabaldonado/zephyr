@@ -19,7 +19,7 @@ function lovr.load()
   editor:init(level)
   lovr.graphics.setShader(require('shaders/simple'))
   lovr.graphics.setBackgroundColor(130, 200, 220)
-  lovr.headset.setClipDistance(.01, 20)
+  lovr.headset.setClipDistance(.01, 21)
 
   for i = 1, 20 do
     local direction = math.random() * 2 * math.pi
