@@ -6,6 +6,10 @@ local quaternion = maf.quat
 local util = require 'util'
 
 Editor.grabRange = .5
+Editor.satchelItemSize = .1
+Editor.menuOpen = false
+Editor.menuController = {}
+Editor.menuController.rotation = quaternion()
 
 function Editor:init(level)
   self.active = true
@@ -19,10 +23,11 @@ end
 function Editor:update(dt)
   self:updateControllers()
   self:checkSave()
+
 end
 
 function Editor:draw()
-  --
+  if self.menuOpen then self:drawSatchel() end
 end
 
 function Editor:controllerpressed(controller, button)
@@ -42,6 +47,15 @@ function Editor:controllerpressed(controller, button)
     elseif button == 'grip' then
       self:beginRotate(controller, entity)
     end
+  end
+
+  if button == 'menu' and not self.menuOpen then
+    self.menuOpen = true
+    self.menuController = controller
+    self.menuController.position = vector()
+    self.menuController.position:set(controller.currentPosition)
+  else
+    self.menuOpen = false
   end
 end
 
@@ -108,10 +122,10 @@ function Editor:dirty()
 end
 
 function Editor:generateEntities()
-  local modelPath = 'art/models/'
-  local texturePath = 'art/textures/'
+  local modelPath, texturePath = 'art/models/', 'art/textures/'
   local modelNames = lovr.filesystem.getDirectoryItems(modelPath)
   local textureNames = lovr.filesystem.getDirectoryItems(texturePath)
+
   local entityNames = {}
   for i,modelName in ipairs(modelNames) do
     local name = modelName:sub(1, -5)
@@ -128,27 +142,65 @@ function Editor:generateEntities()
     local name = modelName:sub(1, -5)
     models[name] = modelName
   end
-  
+
+  local grid = self:createGrid(#modelNames)
   local entities = {}
   for i, name in ipairs(entityNames) do
     local texturePathOrNil = textures[name] and texturePath..textures[name] or nil
+    local model = texturePathOrNil and lovr.graphics.newModel(modelPath..models[name], texturePathOrNil) or lovr.graphics.newModel(modelPath..models[name])
+
     entities[i] = {
       modelPath = modelPath..models[name],
       texturePath = texturePathOrNil,
       transform = {
-        x = 0,
-        y = 1.5,
-        z = 0,
-        scale = .1,
+        x = grid[i].x,
+        y = grid[i].y,
+        z = grid[i].z,
+        scale = self:constrainScale(model),
         angle = 0,
         ax = 0,
         ay = 0,
-        az = 0
-      }
+        az = 0,
+      },
+      model = model
     }
   end
 
   return entities
+end
+
+function Editor:createGrid(total)
+  local spacing = self.satchelItemSize + self.satchelItemSize / 2
+  local rowCount = 10
+
+  local grid = {}
+  local startingY = 1.75
+  for i = 1, total, rowCount do
+    y = startingY - spacing
+    for j = 1, rowCount do
+      local x = math.sin(j / rowCount)
+      local z = math.cos(j / rowCount)
+      table.insert(grid, { x = x, y = y, z = z })
+    end
+  end
+  return grid
+end
+
+function Editor:drawSatchel()
+  for i, entity in ipairs(self.satchel) do
+    local t = entity.transform
+    local x, y, z = self.menuController.position:unpack()
+    -- local angleAxis = self.menuController.rotation:getAngleAxis()
+    entity.model:draw(t.x, t.y, t.z, t.scale, 0, 0, 0, 0)
+  end
+end
+
+function Editor:constrainScale(model)
+  local minx, maxx, miny, maxy, minz, maxz = model:getAABB()
+  local width, height, depth = maxx - minx, maxy - miny, maxz - minz
+  local max = math.max(width, height, depth)
+
+  return self.satchelItemSize / max
 end
 
 function Editor:getOtherController(controller)

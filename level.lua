@@ -38,8 +38,6 @@ function level:addEntity(entityData)
   newEntity.lastPosition = vector()
   newEntity.lastRotation = quaternion()
   
-  newEntity.model = newEntity.texturePath and lovr.graphics.newModel(newEntity.modelPath, newEntity.texturePath) or lovr.graphics.newModel(newEntity.modelPath)
-
   table.insert(self.data.entities, newEntity)
   newEntity.index = #self.data.entities
 end
