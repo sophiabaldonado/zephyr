@@ -15,4 +15,13 @@ function util.each(t, f, iterator)
   end
 end
 
+function util.copy(x)
+  local t = type(x)
+  if t ~= 'table' then return x end
+  local y = {}
+  for k, v in next, x, nil do y[k] = util.copy(v) end
+  setmetatable(y, getmetatable(x))
+  return y
+end
+
 return util
