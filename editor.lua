@@ -7,8 +7,7 @@ local util = require 'util'
 
 Editor.grabRange = .3
 Editor.satchelItemSize = .075
-Editor.menuOpen = false
-Editor.menuController = {}
+Editor.headPosition = vector()
 
 function Editor:init(level)
   self.active = true
@@ -17,6 +16,10 @@ function Editor:init(level)
   self.isDirty = false
   self.lastChange = lovr.timer.getTime()
   self.satchel = self:generateEntities()
+  self.menu = {
+    active = false,
+    controller = {},
+  }
 end
 
 function Editor:update(dt)
@@ -25,7 +28,12 @@ function Editor:update(dt)
 end
 
 function Editor:draw()
-  if self.menuOpen then self:drawSatchel() end
+  if self.menu.active then self:drawSatchel() end
+
+  util.each(self.controllers, function(controller)
+    local x, y, z = controller.object:getPosition()
+    lovr.graphics.cube('fill', x, y, z, .1, controller.object:getOrientation())
+  end, ipairs)
 end
 
 function Editor:controllerpressed(controller, button)
@@ -47,16 +55,16 @@ function Editor:controllerpressed(controller, button)
     end
   end
 
-  if button == 'menu' and not self.menuOpen then
-    self.menuOpen = true
-    self.menuController = controller
-    self:setSatchelItemsOffsets()
+  if button == 'menu' and not self.menu.active then
+    self.menu.active = true
+    self.menu.controller = controller
+    self:setSatchelItems()
   elseif button =='menu' then
-    self.menuOpen = false
+    self.menu.active = false
   end
 
   local satchelItem = self:getClosestSatchelItemInRange(self.satchelItemSize, controller.object:getPosition())
-  if self.menuOpen and satchelItem then
+  if self.menu.active and satchelItem then
     if button == 'trigger' then
       self.level:addEntity(util.copy(satchelItem))
     end
@@ -147,7 +155,6 @@ function Editor:generateEntities()
     models[name] = modelName
   end
 
-  local grid = self:createMenuGrid(#modelNames)
   local entities = {}
   for i, name in ipairs(entityNames) do
     local texturePathOrNil = textures[name] and texturePath..textures[name] or nil
@@ -157,9 +164,9 @@ function Editor:generateEntities()
       modelPath = modelPath..models[name],
       texturePath = texturePathOrNil,
       transform = {
-        x = grid[i].x,
-        y = grid[i].y,
-        z = grid[i].z,
+        x = 0,
+        y = 0,
+        z = 0,
         scale = self:constrainScale(model),
         angle = 0,
         ax = 0,
@@ -173,30 +180,37 @@ function Editor:generateEntities()
   return entities
 end
 
-function Editor:createMenuGrid(total)
+function Editor:createMenuGrid(total, direction)
   local spacing = self.satchelItemSize * 2.5
   local rowCount = 6
-  local radius = .5
+  local radius = .25
 
   local grid = {}
   local startingY = 1.5
   local y = startingY
   for i = 1, total, rowCount do
     for j = 1, rowCount do
-      local angle = (((j - 1) / (rowCount - 1)) - 1) * 1.25
-      local x = math.sin(angle) * radius
-      local z = math.cos(angle) * radius
-      table.insert(grid, { x = x, y = y, z = z })
+      local angle = (((j - 1) / (rowCount - 1)) * 2) - 1
+      local r = quaternion():angleAxis(angle, 0, 1, 0)
+      local p = (r * direction) * radius
+      table.insert(grid, { x = p.x, y = y, z = p.z })
     end
     y = y - spacing
   end
   return grid
 end
 
-function Editor:setSatchelItemsOffsets()
+function Editor:setSatchelItems()
   for i, entity in ipairs(self.satchel) do
+    local menu = self.menu
     local t = entity.transform
-    local pos = self.menuController.currentPosition
+    local pos = menu.controller.currentPosition
+
+    local direction = pos - self.headPosition:set(lovr.headset.getPosition())
+    direction.y = 0
+    local grid = self:createMenuGrid(#self.satchel, direction:normalize())
+
+    t.x, t.y, t.z = grid[i].x, grid[i].y, grid[i].z
     t.x, t.z = t.x + pos.x, t.z + pos.z
   end
 end
