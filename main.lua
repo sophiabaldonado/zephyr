@@ -1,40 +1,19 @@
-local balloon = require 'balloon'
-local input = require 'input'
 local editor = require 'editor'
 local level = require 'level'
 
 viewport = {
-  translation = 0,
-  rotation = 0,
   viewMatrix = lovr.math.newTransform()
 }
 
-clouds = {}
-
 function lovr.load()
-  world = lovr.physics.newWorld()
-  input:init()
-  balloon:init()
   level:init('levels/level.json')
   editor:init(level)
   lovr.graphics.setShader(require('shaders/simple'))
-  lovr.graphics.setBackgroundColor(130, 200, 220)
+  lovr.graphics.setBackgroundColor(20, 20, 25)
   lovr.headset.setClipDistance(.01, 21)
-
-  for i = 1, 20 do
-    local direction = math.random() * 2 * math.pi
-    local distance = 4 + math.random() * 4
-    local y = 1 + math.random() * 10
-    local x = math.cos(direction) * distance
-    local z = math.sin(direction) * distance
-    table.insert(clouds, { x, y, z })
-  end
 end
 
 function lovr.update(dt)
-  input:update(dt)
-  balloon:update(dt)
-  world:update(dt)
   level:update(dt)
   editor:update(dt)
 end
@@ -49,33 +28,13 @@ function lovr.draw()
 
   level:draw()
   editor:draw()
-
-  if not editor.active then
-    input:draw()
-  end
-
-  lovr.graphics.push()
-  lovr.graphics.translate(0, -viewport.translation, 0)
-  lovr.graphics.rotate(viewport.rotation)
-
-  balloon:draw()
-
-  shader:send('ambientColor', { .9, .9, .9 })
-  for i = 1, #clouds do
-    local x, y, z = unpack(clouds[i])
-    lovr.graphics.cube('fill', x, y, z, .2)
-  end
-
-  lovr.graphics.pop()
 end
 
 function lovr.controlleradded()
-  input:refresh()
   editor:refreshControllers()
 end
 
 function lovr.controllerremoved()
-  input:refresh()
   editor:refreshControllers()
 end
 

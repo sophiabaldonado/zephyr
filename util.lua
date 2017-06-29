@@ -24,4 +24,8 @@ function util.copy(x)
   return y
 end
 
+function util.round(x)
+  return math.floor(x + .5)
+end
+
 return util
