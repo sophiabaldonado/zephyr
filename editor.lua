@@ -98,6 +98,13 @@ function Editor:controllerpressed(controller, button)
   local otherController = self:getOtherController(controller)
   button = button or 'trigger'
 
+  local satchelItem = self:getClosestSatchelItemInRange(self.satchelItemSize, controller.object:getPosition())
+  if self.menu.active and satchelItem then
+    if button == 'trigger' then
+      self.level:addEntity(util.copy(satchelItem))
+    end
+  end
+
   local entity = self:getClosestEntity(controller)
 
   if entity then
@@ -118,13 +125,6 @@ function Editor:controllerpressed(controller, button)
     self:setSatchelItems()
   elseif button =='menu' then
     self.menu.active = false
-  end
-
-  local satchelItem = self:getClosestSatchelItemInRange(self.satchelItemSize, controller.object:getPosition())
-  if self.menu.active and satchelItem then
-    if button == 'trigger' then
-      self.level:addEntity(util.copy(satchelItem))
-    end
   end
 end
 
