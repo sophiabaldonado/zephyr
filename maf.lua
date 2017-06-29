@@ -262,6 +262,15 @@ quat = {
       return out
     end,
 
+    inverse = function(q, out)
+      out = out or q
+      out.x = -q.x
+      out.y = -q.y
+      out.z = -q.z
+      out.w = q.w
+      return out
+    end,
+
     length = function(q)
       return math.sqrt(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w)
     end,

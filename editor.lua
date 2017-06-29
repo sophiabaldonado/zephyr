@@ -163,6 +163,7 @@ function Editor:refreshControllers()
       },
       rotate = {
         active = false,
+        lastRotation = quaternion(),
         counter = 0
       }
     }
@@ -352,8 +353,10 @@ end
 function Editor:beginRotate(controller, entity)
   controller.activeEntity = entity
   controller.rotate.active = true
+  controller.rotate.lastRotation:angleAxis(controller.object:getOrientation())
 end
 
+local tmpquat = quaternion()
 function Editor:updateRotate(controller)
   local t = controller.activeEntity.transform
   local entityPosition = vector(t.x, t.y, t.z)
@@ -361,11 +364,18 @@ function Editor:updateRotate(controller)
   local d1 = (controller.currentPosition - entityPosition):normalize()
   local d2 = (controller.lastPosition - entityPosition):normalize()
   local rotation = quaternion():between(d2, d1)
+
+  --local delta = tmpquat:angleAxis(controller.object:getOrientation()):mul(controller.rotate.lastRotation:inverse())
+  --controller.rotate.counter = controller.rotate.counter + tmpquat:getAngleAxis()
   controller.rotate.counter = controller.rotate.counter + (controller.currentPosition - controller.lastPosition):length()
   if controller.rotate.counter >= .1 then
     controller.object:vibrate(.001)
     controller.rotate.counter = 0
   end
+
+  --controller.rotate.lastRotation:angleAxis(controller.object:getOrientation())
+
+  --self.level:updateEntityRotation(controller.activeEntity.index, delta)
 
   self.level:updateEntityRotation(controller.activeEntity.index, rotation)
   self:dirty()
