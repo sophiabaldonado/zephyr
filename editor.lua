@@ -5,7 +5,7 @@ local vector = maf.vector
 local quaternion = maf.quat
 local util = require 'util'
 
-Editor.satchelItemSize = .075
+Editor.satchelItemSize = .095
 Editor.headPosition = vector()
 
 function Editor:init(level)
