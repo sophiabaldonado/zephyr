@@ -365,6 +365,9 @@ function Editor:updateRotate(controller)
   local d2 = (controller.lastPosition - entityPosition):normalize()
   local rotation = quaternion():between(d2, d1)
 
+	local x, y, z = controller.object:getPosition()
+	local angle, ax, ay, az = lovr.math.lookAt(t.x, t.y, t.z, x, y, z, 0, 1, 0)
+
   --local delta = tmpquat:angleAxis(controller.object:getOrientation()):mul(controller.rotate.lastRotation:inverse())
   --controller.rotate.counter = controller.rotate.counter + tmpquat:getAngleAxis()
   controller.rotate.counter = controller.rotate.counter + (controller.currentPosition - controller.lastPosition):length()
@@ -373,11 +376,11 @@ function Editor:updateRotate(controller)
     controller.rotate.counter = 0
   end
 
-  --controller.rotate.lastRotation:angleAxis(controller.object:getOrientation())
+  controller.rotate.lastRotation:angleAxis(controller.object:getOrientation())
 
   --self.level:updateEntityRotation(controller.activeEntity.index, delta)
 
-  self.level:updateEntityRotation(controller.activeEntity.index, rotation)
+  self.level:updateEntityRotation(controller.activeEntity.index, angle, ax, ay, az)
   self:dirty()
 end
 

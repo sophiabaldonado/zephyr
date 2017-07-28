@@ -27,11 +27,12 @@ function level:updateEntityScale(entityIndex, scaleMultiplier)
   t.scale = t.scale * scaleMultiplier
 end
 
-function level:updateEntityRotation(entityIndex, rotation)
+function level:updateEntityRotation(entityIndex, angle, ax, ay, az)
   local t = self.data.entities[entityIndex].transform
-  local ogRotation = quaternion():angleAxis(t.angle, t.ax, t.ay, t.az)
+  --local ogRotation = quaternion():angleAxis(t.angle, t.ax, t.ay, t.az)
 
-  t.angle, t.ax, t.ay, t.az = (rotation * ogRotation):getAngleAxis()
+  --t.angle, t.ax, t.ay, t.az = (rotation * ogRotation):getAngleAxis()
+	t.angle, t.ax, t.ay, t.az = angle, ax, ay, az
 end
 
 function level:addEntity(entityData)

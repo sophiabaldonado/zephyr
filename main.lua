@@ -1,5 +1,6 @@
 local editor = require 'editor'
 local level = require 'level'
+local net = require 'net'
 
 viewport = {
   viewMatrix = lovr.math.newTransform()
@@ -11,11 +12,13 @@ function lovr.load()
   lovr.graphics.setShader(require('shaders/simple'))
   lovr.graphics.setBackgroundColor(20, 20, 25)
   lovr.headset.setClipDistance(.01, 21)
+	net:init()
 end
 
 function lovr.update(dt)
   level:update(dt)
   editor:update(dt)
+	net:update(dt)
 end
 
 function lovr.draw()
